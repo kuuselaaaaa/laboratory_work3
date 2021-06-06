@@ -162,4 +162,75 @@ TEST(setpath, empty)
     dir.removeRecursively();
 }
 
+TEST(isdir, dir)
+{
+    QDir dir(".");
+    if(dir.exists("test_dir")) {
+        dir.cd("test_dir");
+        dir.removeRecursively();
+    }
+
+    dir.mkdir("test_dir");
+
+    QFileInfo info("./test_dir");
+
+    Utils utils;
+    utils.setPath(info.absolutePath());
+    bool res = utils.isDir(info.absoluteFilePath());
+
+    EXPECT_TRUE(res);
+
+    dir.cd("test_dir");
+    dir.removeRecursively();
+}
+
+TEST(isdir, file)
+{
+    QDir dir(".");
+    if(dir.exists("test_dir")) {
+        dir.cd("test_dir");
+        dir.removeRecursively();
+    }
+
+    dir.mkdir("test_dir");
+
+    QString file_name = "./test_dir/testfile.txt";
+    QFile file(file_name);
+    file.open(QIODevice::WriteOnly);
+
+    QFileInfo info("./test_dir/testfile.txt");
+
+    Utils utils;
+    utils.setPath(info.absolutePath());
+    bool res = utils.isDir(info.absoluteFilePath());
+
+    EXPECT_FALSE(res);
+
+    dir.cd("test_dir");
+    dir.removeRecursively();
+}
+
+TEST(isdir, not_exists)
+{
+    QDir dir(".");
+    if(dir.exists("test_dir")) {
+        dir.cd("test_dir");
+        dir.removeRecursively();
+    }
+
+    dir.mkdir("test_dir");
+
+    QFileInfo info("./test_dir/testfile.txt");
+
+    Utils utils;
+    utils.setPath(info.absolutePath());
+    bool res = utils.isDir(info.absoluteFilePath());
+
+    EXPECT_FALSE(res);
+
+    dir.cd("test_dir");
+    dir.removeRecursively();
+}
+
+
 #endif // UTILSTEST_H
