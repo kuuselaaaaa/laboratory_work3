@@ -1,0 +1,15 @@
+<RCC>
+    <qresource prefix="/">
+        <file>main.qml</file>
+        <file>DirEntry.qml</file>
+        <file>images/code_file.svg</file>
+        <file>images/file.svg</file>
+        <file>images/folder.svg</file>
+        <file>images/music_file.svg</file>
+        <file>images/video_file.svg</file>
+        <file>images/unknown.svg</file>
+        <file>images/background.png</file>
+        <file>images/image.svg</file>
+        <file>BottomBar.qml</file>
+    </qresource>
+</RCC>
