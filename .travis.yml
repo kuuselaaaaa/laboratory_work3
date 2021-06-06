@@ -10,6 +10,11 @@ before_install:
     - sudo apt-get install -y qt5-default qttools5-dev-tools
     - pip install --user cpp-coveralls
 
+addons:
+    sonarcloud:
+        organization: "kuuselaaaaa"
+        token: $SONARTOKEN
+
 script:
     - qmake 
     - make
@@ -17,8 +22,8 @@ script:
     
 after_success:
     - coveralls --root . -E ".*external.*" -E ".*tests.*"
-    #- build-wrapper-linux-x86-64 --out-dir bw-output make clean all
-    #- sonar-scanner
+    - build-wrapper-linux-x86-64 --out-dir bw-output make clean all
+    - sonar-scanner
 
 cache:
     directories:
