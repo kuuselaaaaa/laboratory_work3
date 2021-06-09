@@ -1,0 +1,300 @@
+%%% Для сборки выполнить 2 раза команду: pdflatex <имя файла>
+
+\documentclass[a4paper,12pt]{article}
+
+\usepackage{ucs}
+\usepackage[utf8x]{inputenc}
+\usepackage[russian]{babel}
+%\usepackage{cmlgc}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{titlesec}
+%\usepackage{courier}
+
+\makeatletter
+\renewcommand\@biblabel[1]{#1.}
+\makeatother
+
+\newcommand{\myrule}[1]{\rule{#1}{0.4pt}}
+\newcommand{\sign}[2][~]{{\small\myrule{#2}\\[-0.7em]\makebox[#2]{\it #1}}}
+
+% Поля
+\usepackage[top=20mm, left=30mm, right=10mm, bottom=20mm, nohead]{geometry}
+\usepackage{indentfirst}
+
+% Межстрочный интервал
+\renewcommand{\baselinestretch}{1.50}
+
+% ------------------------------------------------------------------------------
+% minted
+% ------------------------------------------------------------------------------
+\usepackage{minted}
+
+
+% ------------------------------------------------------------------------------
+% tcolorbox / tcblisting
+% ------------------------------------------------------------------------------
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%                         %%%
+%%% Начало титульного листа %%%
+
+\thispagestyle{empty}
+\begin{center}
+
+
+    \renewcommand{\baselinestretch}{1}
+    {\large
+        {\sc Петрозаводский государственный университет\\
+            Институт математики и информационных технологий\\
+            Кафедра информатики и математического обеспечения
+        }
+    }
+
+\end{center}
+
+
+\begin{center}
+    %%%%%%%%%%%%%%%%%%%%%%%%%
+    %
+    % Раскомментируйте (уберите знак процента в начале строки)
+    % для одной из строк типа направления  - бакалавриат/
+    % магистратура и для одной из
+    % строк Вашего направление подготовки
+    %
+    Направление подготовки бакалавриата \\
+    % 01.03.02 --- Прикладная математика и информатика \\
+    % 09.03.02 --- Информационные системы и технологии \\
+    09.03.04 --- Программная инженерия \\
+    %%%%%%%%%%%%%%%%%%%%%%%%%
+\end{center}
+
+\vfill
+
+\begin{center}
+    {\normalsize
+    Отчет о проектной работе по курсу <<Основы информатики и программирования>>}
+
+    \medskip
+
+    %%% Название работы %%%
+    {\Large \sc {Приложение <<Qt File Manager>> }} \\
+\end{center}
+
+\medskip
+
+\begin{flushright}
+    \parbox{11cm}{%
+        \renewcommand{\baselinestretch}{1.2}
+        \normalsize
+        Выполнил:\\
+        % Выполнили:\\
+        %%% ФИО студента %%%
+        студент 1 курса группы 22107
+        \begin{flushright}
+            Д. А. Куусела \sign[подпись]{4cm}
+        \end{flushright}
+
+        %%% Второй участник %%%
+        % студента 1 курса группы 2210X
+        % \begin{flushright}
+        % 	И. О. Фамилия \sign[подпись]{4cm}
+        % \end{flushright}
+
+        %%%%%%%%%%%%%%%%%%%%%%%%%
+        % девушкам применять "Выполнила" и "студентка"
+        %%%%%%%%%%%%%%%%%%%%%%%%%
+    }
+\end{flushright}
+
+\vfill
+
+\begin{center}
+    \large
+    Петрозаводск --- 2021
+\end{center}
+
+%%% Конец титульного листа  %%%
+%%%                         %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%                          %%%
+%%% Содержание               %%%
+
+\newpage
+
+\tableofcontents
+
+%%% Содержание              %%%
+%%%                         %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%                          %%%
+%%% Введение                 %%%
+
+%%% В введении Вы должны описать предметную область, с которой связана %%%
+%%% Ваша работа, показать её актуальность, вкратце определить цель     %%%
+%%% разработки					       %%%
+
+
+\newpage
+\section*{Введение}
+\addcontentsline{toc}{section}{Введение}
+
+Цель проекта: разработать простой файловый менеджер на C++ и QtQuick.
+
+Задачи проекта:
+\begin{enumerate}
+    \item Научиться считывать содержимое директорий при помощи C++
+    \item Научиться получать информацию о файлах и директориях (размер и дату изменения)
+    \item Организовать хранение данных о файлах
+    \item Разработать интерфейс приложения
+    \item Разработать функции для загрузки информации в QML
+    \item Реализовать переход по директориям
+\end{enumerate}
+
+%%%                          %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Требования к приложению %%%
+% \newpage
+\section{Требования к приложению}
+\begin{enumerate}
+    \item Возможность просматривать содержимое директорий
+    \item Возможность переходить в директорию по клику
+    \item Возможность открыть файл в приложении по умолчанию
+\end{enumerate}
+% \subsection{Подраздел}
+
+%%%                                     %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%                                     %%%
+%%% Проектирование приложения           %%%
+% \newpage
+\section{Проектирование приложения}
+\subsection{main.cpp}
+Главный C++ файл, запускает создаёт QGuiApplication и передаёт в контекст приложения модуль Utils.
+\begin{minted}{cpp}
+// добавляем Utils в QML
+Utils utils;
+engine.rootContext()->setContextProperty("utils", &utils);
+\end{minted}
+\subsection{utils.cpp/utils.h}
+Класс Utils. Содержит функции для получения и хранения информации о файлах. Также реализует функции для изменения текущей рабочей директории (переход в директорию). Конструктор класса Utils:
+\begin{minted}{cpp}
+Utils::Utils(QObject *parent) : QObject(parent)
+{
+    locale = QLocale::system();
+    setPath(QDir::currentPath());
+    readContentInfo();
+}
+\end{minted}
+Основные функции и переменные класса:
+\begin{enumerate}
+    \item QHash<QString, QFileInfo> currentContent -- информация о файлах в текущей директории
+    \item QList<QString> getDirContent(QString path) -- получает список файлов (абсолютные пути) в папке
+    \item readContentInfo -- записывает содержимое текущей директории в currentContent
+    \item void requestUpdate() -- публичный слот для запроса из QML на обновление данных
+    \item bool isFile(QString path), bool isDir(QString path), bool isAudioFile(QString path) и др. -- функции для определения типа файла
+    \item bool setPath(QString newPath) -- переход по пути newPath, если он существует
+    \item bool openFile(QString path) -- открытие файла в приложении по умолчанию (например VLC для .mp4 файла)
+\end{enumerate}
+\subsection{BottomBar.qml}
+Нижняя панель приложения с информацией.
+\subsection{DirEntry.qml}
+Элемент для отображения файла. Содержит иконку, имя и другие данные.
+\subsection{main.qml}
+Основной код интерфейса. Отображает список файлов (DirEntry) в виде GridView.
+% \begin{enumerate}
+%     \item main.cpp -- главный C++ файл, запускает создаёт QGuiApplication и передаёт в контекст приложения модуль Utils.
+%     \item utils.cpp/utils.h -- класс Utils. Содержит функции для получения и хранения информации о файлах. Также реализует функции для изменения текущей рабочей директории (переход в директорию).\\Основные функции и переменные класса:
+%           \begin{itemize}
+%               \item QHash<QString, QFileInfo> currentContent -- информация о файлах в текущей директории
+%               \item QList<QString> getDirContent(QString path) -- получает список файлов (абсолютные пути) в папке
+%               \item readContentInfo -- записывает содержимое текущей директории в currentContent
+%               \item void requestUpdate() -- публичный слот для запроса из QML на обновление данных
+%               \item bool isFile(QString path), bool isDir(QString path), bool isAudioFile(QString path) и др. -- функции для определения типа файла
+%               \item bool setPath(QString newPath) -- переход по пути newPath, если он существует
+%               \item bool openFile(QString path) -- открытие файла в приложении по умолчанию (например VLC для .mp4 файла)
+%           \end{itemize}
+%     \item BottomBar.qml -- нижняя панель приложения с информацией.
+%     \item DirEntry.qml -- элемент для отображения файла. Содержит иконку, имя и другие данные.
+%     \item main.qml -- основной код интерфейса. Отображает список файлов (DirEntry) в виде GridView.
+% \end{enumerate}
+
+%%%                          %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%                          %%%
+%%% Реализация приложения    %%%
+% \newpage
+\section{Реализация приложения}
+Для работы с файлами и директориями используются библиотеки Qt:
+\begin{itemize}
+    \item QDir
+    \item QDirIterator
+    \item QFile
+    \item QFileInfo
+    \item QMimeType
+    \item QMimeDatabase
+\end{itemize}
+
+Для форматирования дат и приведения размера файла в human readable формат используются библиотеки QDateTime и QLocale.
+
+Для открытия файла в приложении по умолчанию используются QDesktopServices и QUrl.
+
+В итоге приложение содержит:
+\begin{itemize}
+    \item 5 модулей (2 C++ и 3 QML)
+    \item 1 C++ класс с 19 функциями
+    \item 150 строк C++ кода и 308 строк QML кода
+\end{itemize}
+
+%%%                          %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%                          %%%
+%%% Заключение               %%%
+\newpage
+\section*{Заключение}
+\addcontentsline{toc}{section}{Заключение}
+В результате реализован простой файловый менеджер, который позволяет просматривать содержимое пользовательских директорий. Приложение различает аудио, видео, фото, а также файлы с иходным кодом, для разных видов файлов загружаются разные иконки. Реализованы все запланированные функции.
+
+Скриншот приложения:
+\begin{center}
+    \includegraphics[scale=0.8]{images/Screenshot_20210609_142546.png}
+\end{center}
+
+%%%                          %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%                          %%%
+%%% Приложение               %%%
+
+\newpage
+\appendix
+%\section*{Приложение}
+%\addcontentsline{toc}{section}{Приложение}
+%\titleformat{\section}[display]
+%  {\normalfont\Large\bfseries}
+%  {Приложение\ \thesection}
+%  {0pt}{\Large\centering}
+%\renewcommand{\thesection}{\Asbuk{section}}
+
+%%%                          %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\end{document}
+

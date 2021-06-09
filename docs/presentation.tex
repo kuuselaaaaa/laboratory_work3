@@ -1,0 +1,167 @@
+\documentclass[10pt]{beamer}
+\usepackage[T1,T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{hyperref}
+\hypersetup{unicode=true}
+\usepackage{fontawesome}
+\usepackage{graphicx}
+\usepackage[english,russian]{babel}
+
+\usepackage[T1]{fontenc}
+\usepackage{fontawesome}
+\usepackage{PTSans} 
+\mode<presentation>
+{
+  \usetheme[progressbar=foot,numbering=fraction,background=light]{metropolis} 
+  \usecolortheme{default}
+  \usefonttheme{default}
+  \setbeamertemplate{navigation symbols}{}
+  \setbeamertemplate{caption}[numbered]
+} 
+
+\let\textttorig\texttt
+\renewcommand<>{\texttt}[1]{%
+  \only#2{\textttorig{#1}}%
+}
+
+\usepackage{minted}
+
+\usepackage{xcolor}
+\definecolor{codecolor}{HTML}{FFC300}
+
+\usepackage{tcolorbox}
+\tcbuselibrary{most,listingsutf8,minted}
+
+\tcbset{tcbox width=auto,left=1mm,top=1mm,bottom=1mm,
+right=1mm,boxsep=1mm,middle=1pt}
+
+\newtcblisting{myr}[1]{colback=codecolor!5,colframe=codecolor!80!black,listing only, 
+minted options={numbers=left, style=tcblatex,fontsize=\tiny,breaklines,autogobble,linenos,numbersep=3mm},
+left=5mm,enhanced,
+title=#1, fonttitle=\bfseries,
+listing engine=minted,minted language=r}
+
+\definecolor{mygreen}{HTML}{37980D}
+\definecolor{myblue}{HTML}{0D089F}
+\definecolor{myred}{HTML}{98290D}
+
+\usepackage{listings}
+
+\lstdefinelanguage{XML}
+{
+  morestring=[b]",
+  morecomment=[s]{<!--}{-->},
+  morestring=[s]{>}{<},
+  morekeywords={ref,xmlns,version,type,canonicalRef,metr,real,target}
+}
+
+\lstdefinestyle{myxml}{
+language=XML,
+showspaces=false,
+showtabs=false,
+basicstyle=\ttfamily,
+columns=fullflexible,
+breaklines=true,
+showstringspaces=false,
+breakatwhitespace=true,
+escapeinside={(*@}{@*)},
+basicstyle=\color{mygreen}\ttfamily,
+stringstyle=\color{myred},
+commentstyle=\color{myblue}\upshape,
+keywordstyle=\color{myblue}\bfseries,
+}
+
+\title{Приложение <<Qt File Manager>>}
+\subtitle{Отчет о проектной работе по курсу <<Основы информатики и программирования>>}
+\author{Д. А. Куусела}
+\date{8 июня 2021}
+
+\begin{document}
+
+\maketitle
+
+\begin{frame}[fragile]{Цель}
+    \begin{block}{Цель работы}
+
+        Разработать простой файловый менеджер на C++ и QtQuick
+    \end{block}
+    \begin{block}{Задачи}
+        \begin{enumerate}
+            \item Реализовать работу с файлами и директориям на C++
+            \item Организовать хранение данных о файлах
+            \item Разработать интерфейс приложения
+            \item Разработать функции для загрузки информации в QML
+        \end{enumerate}
+    \end{block}
+\end{frame}
+
+\begin{frame}{Тестовая директория}
+    Тестовая структура директорий:\\
+    \begin{center}
+        \includegraphics[scale=0.5]{images/Screenshot_20210609_150249.png}
+    \end{center}
+    <<.>> -- текущая директория, <<..>> -- родительская директория (для UNIX систем, я тестировал на MacOS).\\
+    Файлы имена, которых начинаются с точки (<<.hidden>>) -- скрытые файлы, обычно они не показываются. Текущая версия приложения показывает все файлы, включая скрытые.
+\end{frame}
+
+\begin{frame}
+    \frametitle{Этапы разработки приложения}
+    \begin{itemize}
+        \item Реализация класса (Utils) для работы с директориям и файлами (получение информации о типе, размере и др.)
+        \item Разработка QML интерфейса
+        \item Реализация отображения информации о файлах в QML (черех GridView)
+        \item Доработка класса Utils, добавление функций для перехода по директориям
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Определение типа файла}
+    Чтобы определить является объект файлом или директорий, используются функции Qt: QFileInfo.isFile и QFileInfo.isDir. Если объект является файлом, то обрабатывается его MIME-тип:
+    \begin{minted}{C++}
+QString Utils::getMimeName(QString path) {
+    QMimeDatabase db;
+    QMimeType fileType = db.mimeTypeForFile(path,
+                        QMimeDatabase::MatchExtension);
+    return fileType.name();
+}
+bool Utils::isVideoFile(QString path) {
+    return getMimeName(path).startsWith("video");
+}
+bool Utils::isCodeFile(QString path) {
+    // с text/x начинаются файлы с исходным кодом
+    return getMimeName(path).startsWith("text/x");
+}
+// и другие функции...
+    \end{minted}
+\end{frame}
+
+\begin{frame}{Результат}
+    Приложение показывает информацию о файлах и позволяет переходить в директории.
+    \begin{center}
+        \includegraphics[width=0.7\textwidth]{images/Screenshot_20210609_142554.png}
+    \end{center}
+\end{frame}
+
+\begin{frame}{Результат}
+    Если имя файла слишком длинное, то при выборе иконки текст раскрывается.
+    \begin{center}
+        \includegraphics[width=0.7\textwidth]{images/Screenshot_20210609_142546.png}
+    \end{center}
+\end{frame}
+
+\begin{frame}[fragile]{Результат}
+    Реализован запланированный функционал, получено приложение файловый менеджер. В будущем можно добавить такие фичи:
+    \begin{itemize}
+        \item Создание новых папок и файлов.
+        \item Настройка для скрытия <<точка-файлов>>.
+        \item Разные режимы сортировки файлов.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \begin{center}
+        \Large
+        Спасибо за внимание!
+    \end{center}
+\end{frame}
+
+\end{document}
